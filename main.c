@@ -120,9 +120,6 @@ int initDisk() {
 }
 
 int main() {
-    if (initDisk() != 0)
-    {
-        return -1;
-    }   
+    
     return 0;
 }
