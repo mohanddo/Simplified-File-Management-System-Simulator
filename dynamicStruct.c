@@ -1,36 +1,56 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 int nombreBloc;
 int tailleBloc;
 
+#define MAX_ARRAY_SIZE 20
+
 typedef struct {
     int intVal;
     float floatVal;
-    char charVal[20];
+    char charVal[2];
+    int intArray[MAX_ARRAY_SIZE];
+    float floatArray[MAX_ARRAY_SIZE];
+    char charArray[MAX_ARRAY_SIZE][20];
 } Data;
 
 typedef struct {
     char type;
     Data data;
     char name[20];
+    int arraySize;
 } Var;
 
 typedef struct {
     Var *s_truct;
 } Struct;
 
-void setVariable(Var *var, char type, const char *name, void *value) {
+void setVariable(Var *var, char type, const char *name, void *value, int arraySize) {
     var->type = type;
+    var->arraySize = arraySize;
     strcpy(var->name, name);
     switch (type) {
         case 'i':
-            var->data.intVal = *(int *)value;
+            if (arraySize == 0)
+                var->data.intVal = *(int *)value;
+            else
+                memcpy(var->data.intArray, value, arraySize * sizeof(int));
             break;
         case 'f':
-            var->data.floatVal = *(float *)value;
+            if (arraySize == 0)
+                var->data.floatVal = *(float *)value;
+            else
+                memcpy(var->data.floatArray, value, arraySize * sizeof(float));
             break;
         case 'c':
-            strcpy(var->data.charVal, (char *)value);
+            if (arraySize == 0)
+                strcpy(var->data.charVal, (char *)value);
+            else
+                for (int i = 0; i < arraySize; i++) {
+                    strcpy(var->data.charArray[i], ((char (*)[20])value)[i]);
+                }
             break;
         default:
             printf("Unknown type\n");
@@ -48,17 +68,23 @@ void setStruct(Struct *s, int numberVar) {
     for (int i = 0; i < numberVar; i++) {
         char type;
         char name[20];
-        char charVal[20];
         int intVal;
         float floatVal;
+        char charVal[20];
+        int arraySize = 0;
 
         printf("Enter variable name: ");
         scanf("%s", name);
         
-        printf("Enter type ('i' for int, 'f' for float, 'c' for char array): ");
+        printf("Enter type ('i' for int, 'f' for float, 'c' for char, 'I' for int array, 'F' for float array, 'C' for char array): ");
         scanf(" %c", &type);
-        
+
         void *value;
+        if (type == 'I' || type == 'F' || type == 'C') {
+            printf("Enter array size: ");
+            scanf("%d", &arraySize);
+        }
+
         switch (type) {
             case 'i':
                 printf("Enter integer value: ");
@@ -71,37 +97,50 @@ void setStruct(Struct *s, int numberVar) {
                 value = &floatVal;
                 break;
             case 'c':
-                printf("Enter char array value: ");
+                printf("Enter char value: ");
                 scanf("%s", charVal);
                 value = charVal;
                 break;
+            case 'I': {
+                printf("Enter integer values for the array: ");
+                int *intArray = malloc(arraySize * sizeof(int));
+                for (int j = 0; j < arraySize; j++) {
+                    scanf("%d", &intArray[j]);
+                }
+                value = intArray;
+                break;
+            }
+            case 'F': {
+                printf("Enter float values for the array: ");
+                float *floatArray = malloc(arraySize * sizeof(float));
+                for (int j = 0; j < arraySize; j++) {
+                    scanf("%f", &floatArray[j]);
+                }
+                value = floatArray;
+                break;
+            }
+            case 'C': {
+                printf("Enter char values for the array: ");
+                char (*charArray)[20] = malloc(arraySize * sizeof(char[20]));
+                for (int j = 0; j < arraySize; j++) {
+                    scanf("%s", charArray[j]);
+                }
+                value = charArray;
+                break;
+            }
             default:
                 printf("Unknown type\n");
                 exit(1);
         }
-        
-        setVariable(&s->s_truct[i], type, name, value);
+
+        setVariable(&s->s_truct[i], type, name, value, arraySize);
+
+        if (type == 'I' || type == 'F' || type == 'C') {
+            free(value); 
     }
 }
 
-void printStruct(Struct s, int numberVar)
- {
-     for (int i = 0; i < numberVar; i++)
-      { printf("Name: %s, Type: %c, Value: ", s.s_truct[i].name, s.s_truct[i].type); 
-      switch (s.s_truct[i].type) 
-      { case 'i': 
-      printf("%d\n", s.s_truct[i].data.intVal);
-       break;
-        case 'f':
-         printf("%.2f\n", s.s_truct[i].data.floatVal);
-          break; 
-          case 'c': 
-          printf("%s\n", s.s_truct[i].data.charVal);
-           break;
-            default:
-             printf("Unknown\n"); break; 
-             } }};
-
+}
 
 int initDisk() {
     printf("Entrer le nombre de blocs: ");
