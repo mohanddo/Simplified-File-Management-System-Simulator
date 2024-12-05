@@ -36,6 +36,15 @@ void setField(field *field, char type, const char *name, void *value, int arrayS
     }
 }
 
+ void getInput(char *name) {
+         while (scanf("%s", name) != 1 || strlen(name) == 0) {
+                 printf("Enter a valid string \n");
+                 int ch; 
+                 while ((ch = getchar()) != '\n' && ch != EOF);
+                  printf("Enter : ");
+                   }
+                   }
+
 int createNewStruct(Struct *s, int numberField, char *structureName) {
     
     s->s_truct = (field *)malloc(numberField * sizeof(field));
@@ -55,11 +64,11 @@ int createNewStruct(Struct *s, int numberField, char *structureName) {
         int arraySize = 0;
 
         printf("Enter Field name: ");
-        if (scanf("%s", name) != 1)
-        {
-            printf("Enter a valid string \n");
-            return -1;
-        }
+        getInput(name);
+        
+       
+       
+        
         
         printf("Enter type ('i' for int, 'f' for float, 'c' for char, 'I' for int array, 'F' for float array, 'C' for char array): ");
         if (scanf(" %c", &type) != 1)
