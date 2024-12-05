@@ -5,5 +5,5 @@ struct MetaDonnees
     int tailleFichierBlocs, tailleFichierEngistrements;
     int addressPremierBloc;
     int modeOrganisationGlobal, modeOrganisationInterne;
-
+    char structName[20];
 };

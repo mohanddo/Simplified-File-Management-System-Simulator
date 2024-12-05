@@ -31,3 +31,9 @@ int initDisk(int* nombreBloc, int* tailleBloc) {
 
     return 0;
 }
+
+void viderMS(TableAllocation *tableAllocation, int nombreBloc) {
+    for(size_t i = 1; i < nombreBloc; i++) {
+        tableAllocation->tAllocated[i] = false;
+    }
+}

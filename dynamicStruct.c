@@ -1,55 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "Struct.h"
 
-int nombreBloc;
-int tailleBloc;
+void setField(field *field, char type, const char *name, void *value, int arraySize)  {
 
-#define MAX_ARRAY_SIZE 20
+    field->type = type;
+    field->arraySize = arraySize;
+    strcpy(field->name, name);
 
-typedef struct {
-    int intVal;
-    float floatVal;
-    char charVal[2];
-    int intArray[MAX_ARRAY_SIZE];
-    float floatArray[MAX_ARRAY_SIZE];
-    char charArray[MAX_ARRAY_SIZE][20];
-} Data;
-
-typedef struct {
-    char type;
-    Data data;
-    char name[20];
-    int arraySize;
-} Var;
-
-typedef struct {
-    Var *s_truct;
-} Struct;
-
-void setVariable(Var *var, char type, const char *name, void *value, int arraySize) {
-    var->type = type;
-    var->arraySize = arraySize;
-    strcpy(var->name, name);
     switch (type) {
         case 'i':
             if (arraySize == 0)
-                var->data.intVal = *(int *)value;
+                field->data.intVal = *(int *)value;
             else
-                memcpy(var->data.intArray, value, arraySize * sizeof(int));
+                memcpy(field->data.intArray, value, arraySize * sizeof(int));
             break;
         case 'f':
             if (arraySize == 0)
-                var->data.floatVal = *(float *)value;
+                field->data.floatVal = *(float *)value;
             else
-                memcpy(var->data.floatArray, value, arraySize * sizeof(float));
+                memcpy(field->data.floatArray, value, arraySize * sizeof(float));
             break;
         case 'c':
             if (arraySize == 0)
-                strcpy(var->data.charVal, (char *)value);
+                strcpy(field->data.charVal, (char *)value);
             else
                 for (int i = 0; i < arraySize; i++) {
-                    strcpy(var->data.charArray[i], ((char (*)[20])value)[i]);
+                    strcpy(field->data.charArray[i], ((char (*)[20])value)[i]);
                 }
             break;
         default:
@@ -58,14 +36,17 @@ void setVariable(Var *var, char type, const char *name, void *value, int arraySi
     }
 }
 
-void setStruct(Struct *s, int numberVar) {
-    s->s_truct = (Var *)malloc(numberVar * sizeof(Var));
+int createNewStruct(Struct *s, int numberField, char *structureName) {
+    
+    s->s_truct = (field *)malloc(numberField * sizeof(field));
+    strcpy(s->structName, structureName);
+
     if (s->s_truct == NULL) {
         printf("Memory allocation failed\n");
-        exit(1);
+        return -1;
     }
     
-    for (int i = 0; i < numberVar; i++) {
+    for (int i = 0; i < numberField; i++) {
         char type;
         char name[20];
         int intVal;
@@ -73,11 +54,20 @@ void setStruct(Struct *s, int numberVar) {
         char charVal[20];
         int arraySize = 0;
 
-        printf("Enter variable name: ");
-        scanf("%s", name);
+        printf("Enter Field name: ");
+        if (scanf("%s", name) != 1)
+        {
+            printf("Enter a valid string \n");
+            return -1;
+        }
         
         printf("Enter type ('i' for int, 'f' for float, 'c' for char, 'I' for int array, 'F' for float array, 'C' for char array): ");
-        scanf(" %c", &type);
+        if (scanf(" %c", &type) != 1)
+        {
+            printf("Enter a valid character");
+            return -1;
+        }
+        
 
         void *value;
         if (type == 'I' || type == 'F' || type == 'C') {
@@ -133,32 +123,80 @@ void setStruct(Struct *s, int numberVar) {
                 exit(1);
         }
 
-        setVariable(&s->s_truct[i], type, name, value, arraySize);
+        setField(&s->s_truct[i], type, name, value, arraySize);
 
         if (type == 'I' || type == 'F' || type == 'C') {
             free(value); 
-    }
+        }
 }
 
+return 0;
+
 }
 
-int initDisk() {
-    printf("Entrer le nombre de blocs: ");
-    if(scanf("%d", &nombreBloc) != 1) {
-        printf("Error, please enter a valid integer \n");
-        return -1;
+void testCreateNewStruct() {
+    // Define the number of fields for the structure
+    int numberField = 3;
+    Struct s;
+
+    // Create a new struct with a specified name and number of fields
+    createNewStruct(&s, numberField, "Test");
+
+    // Print the struct name
+    printf("Struct Name: %s\n", s.structName);
+
+    // Loop through the fields and print their details
+    for (int i = 0; i < numberField; i++) {
+        printf("\nField %d:\n", i + 1);
+        printf("Name: %s\n", s.s_truct[i].name);
+        printf("Type: %c\n", s.s_truct[i].type);
+
+        // Print the field data based on its type
+        switch (s.s_truct[i].type) {
+            case 'i': // Integer value
+                printf("Integer value: %d\n", s.s_truct[i].data.intVal);
+                break;
+            case 'f': // Float value
+                printf("Float value: %.2f\n", s.s_truct[i].data.floatVal);
+                break;
+            case 'c': // Char value
+                printf("Char value: %s\n", s.s_truct[i].data.charVal);
+                break;
+            case 'I': // Integer array
+                printf("Integer array: ");
+                for (int j = 0; j < s.s_truct[i].arraySize; j++) {
+                    printf("%d ", s.s_truct[i].data.intArray[j]);
+                }
+                printf("\n");
+                break;
+            case 'F': // Float array
+                printf("Float array: ");
+                for (int j = 0; j < s.s_truct[i].arraySize; j++) {
+                    printf("%.2f ", s.s_truct[i].data.floatArray[j]);
+                }
+                printf("\n");
+                break;
+            case 'C': // Char array
+                printf("Char array: ");
+                for (int j = 0; j < s.s_truct[i].arraySize; j++) {
+                    printf("%s ", s.s_truct[i].data.charArray[j]);
+                }
+                printf("\n");
+                break;
+            default:
+                printf("Unknown type\n");
+                break;
+        }
     }
 
-    printf("Entrer la taille de bloc: ");
-    if(scanf("%d", &tailleBloc) != 1) {
-        printf("Error, please enter a valid integer \n");
-        return -1;
-    }
-
-    return 0;
+    // Free the allocated memory for the structure
+    free(s.s_truct);
 }
 
 int main() {
-    
+    // Call the test function to verify the struct creation
+    testCreateNewStruct();
+
     return 0;
 }
+
