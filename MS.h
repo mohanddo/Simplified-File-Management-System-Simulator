@@ -1,0 +1,1 @@
+void initDisk(int *nombreBloc, int *tailleBloc);
