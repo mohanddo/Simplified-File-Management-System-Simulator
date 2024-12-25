@@ -1,0 +1,1 @@
+void printAllocationTable(int nombreBloc);
