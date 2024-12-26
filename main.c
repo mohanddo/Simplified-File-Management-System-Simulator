@@ -1,13 +1,21 @@
 #include <stdio.h>
 #include "MS.h"
+#include "utils.h"
+#include "fichier.h"
 
 int main()
 {
-    int nombreBloc, tailleBloc;
+    FILE *ms = fopen("ms.bin", "wb+");
+    initDisk(ms);
 
-    initDisk(&nombreBloc, &tailleBloc);
-
-    printf("nombreBloc: %d \ntailleBloc: %d \n", nombreBloc, tailleBloc);
+    // printAllocationTable(ms);
+    creerFichier(ms);
+    // printAllocationTable(ms);
+    printMetaDonneesBloc(ms);
+    renommerFichier(ms, "SectionA.txt", "SectionB.txt");
+    printMetaDonneesBloc(ms);
+    // printMainBlocs(ms);
+    fclose(ms);
 
     return 0;
 }
