@@ -7,7 +7,17 @@
 
 void initDisk(FILE *ms);
 
-void updateTAllocation(FILE *ms, int nombreBloc,
-                       MetaDonnees *metaDonnees, bool newValue);
+void initTAllocation(FILE *ms, int nombreBloc);
+
+void initMetaDonneesBlocs(FILE *ms, int tailleBloc);
+
+void initMainBlocs(FILE *ms);
+
+void updateTAllocationAfterCreation(FILE *ms,
+                                    MetaDonnees *metaDonnees);
+
+void updateTAllocationAfterDeletion(FILE *ms, MetaDonnees metaDonnees);
+
+void viderMS(FILE **ms);
 
 #endif

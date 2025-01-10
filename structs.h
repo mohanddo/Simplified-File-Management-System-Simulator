@@ -6,13 +6,15 @@ typedef bool *tAllocation;
 typedef struct
 {
     int id;
+    char first_name[30], last_name[30];
+    double moyenne;
 } Etudiant;
 
 typedef struct
 {
     char nomFichier[30];
     int tailleFichierBlocs, tailleFichierEngistrements;
-    int adressPremierBloc;
+    int adressePremierBloc;
     int modeOrganisationGlobal, modeOrganisationInterne;
 } MetaDonnees;
 
@@ -31,7 +33,16 @@ typedef struct
 typedef struct
 {
     int nombreBloc;
+    int tailleBloc;
     int facteurBlocage;
 } MsMetaDonnees;
+
+typedef union
+{
+    MsMetaDonnees msMetaDonnees;
+    tAllocation tAllocation;
+    MetaDonneesBloc metaDonneesBloc;
+    EtudiantBloc etudiantBloc;
+} Buffer;
 
 #endif
