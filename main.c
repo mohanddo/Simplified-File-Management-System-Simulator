@@ -9,7 +9,7 @@
 int main()
 {
     srand(time(NULL));
-    FILE *ms = fopen("ms.bin", "wb+");
+  /*  FILE *ms = fopen("ms.bin", "wb+");
 
     initDisk(ms);
     creerFichier(ms);
@@ -30,6 +30,6 @@ int main()
     printMainBlocs(ms);
 
     fclose(ms);
-
+*/
     return 0;
 }

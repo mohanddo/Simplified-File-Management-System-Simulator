@@ -58,7 +58,8 @@ void addMetaDonnees(FILE *ms, MetaDonnees *metaDonnees)
     fread(&nombreFichier, sizeof(int), 1, ms);
 
     int newNombreFichier = nombreFichier + 1;
-    fseek(ms, -sizeof(int), SEEK_CUR);
+    // I did change here to long
+    fseek(ms, (long)-sizeof(int), SEEK_CUR);
     fwrite(&newNombreFichier, sizeof(int), 1, ms);
 
     // Skip all the previous Meta Donnees
