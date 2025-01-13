@@ -13,6 +13,7 @@ void printMetaDonnees(MetaDonnees meta);
 void printMetaDonneesBloc(FILE *ms);
 void printMainBlocs(FILE *ms);
 void printEtudiant(Etudiant e);
+void printFichier(FILE *ms);
 
 void seekToMainBlocs(FILE *ms);
 void seekToMetaDonneesBloc(FILE *ms);

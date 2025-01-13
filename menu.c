@@ -6,59 +6,65 @@ void displayMenu(FILE *ms)
     do
     {
         printf("\n====== MENU ======\n");
-        printf("1. Initialize Disk\n");
-        printf("2. Display Allocation Table\n");
-        printf("3. Display Metadata Blocks\n");
-        printf("4. Display Main Blocks\n");
+        printf("1. Display Allocation Table\n");
+        printf("2. Display Metadata Blocks\n");
+        printf("3. Display Main Blocks\n");
+        printf("4. Display File\n");
         printf("5. Clear Disk\n");
-        printf("6. Generate Random Students\n");
-        printf("7. Exit\n");
+        printf("6. Create File\n");
+        printf("7. Rename File\n");
+        printf("8. Delete File\n");
+        printf("9. Search student By Id\n");
+        printf("10. Delete Student\n");
+        printf("11. Exit\n");
         printf("===================\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
+        printf("\n");
 
         switch (choice)
         {
         case 1:
-            initDisk(ms);
-            printf("Disk initialized successfully.\n");
-            break;
-        case 2:
             printAllocationTable(ms);
             break;
-        case 3:
+        case 2:
             printMetaDonneesBloc(ms);
             break;
-        case 4:
+        case 3:
             printMainBlocs(ms);
+            break;
+        case 4:
+            printFichier(ms);
             break;
         case 5:
             viderMS(&ms);
             printf("Disk cleared successfully.\n");
             break;
         case 6:
-        {
-            int numStudents;
-            printf("Enter the number of random students to generate: ");
-            scanf("%d", &numStudents);
-
-            Etudiant *students = (Etudiant *)malloc(sizeof(Etudiant) * numStudents);
-            generateRandomEtudiants(students, numStudents);
-
-            printf("\nGenerated Students:\n");
-            for (int i = 0; i < numStudents; i++)
-            {
-                printEtudiant(students[i]);
-            }
-
-            free(students);
+            creerFichier(ms);
             break;
-        }
+
         case 7:
-            printf("Exiting...\n");
+            renommerFichier(ms);
             break;
+
+        case 8:
+            supprimerFichier(ms);
+            break;
+
+        case 9:
+            rechercherEtudiantParId(ms);
+            break;
+
+        case 10:
+            suppressionLogiqueEtudiant(ms);
+            break;
+
+        case 11:
+            break;
+
         default:
             printf("Invalid choice. Please try again.\n");
         }
-    } while (choice != 7);
+    } while (choice != 11);
 }

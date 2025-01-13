@@ -19,9 +19,10 @@ void creerFichier(FILE *ms)
     printf("Entrer le nombre d'etudiants: ");
     scanf("%d", &(metaDonnees.tailleFichierEngistrements));
     metaDonnees.tailleFichierBlocs = (int)ceil((double)metaDonnees.tailleFichierEngistrements / facteurBlocage);
-    printf("TailleFichierBlocs: %d \n", metaDonnees.tailleFichierBlocs);
 
-    printf("Organiation global contigue : 0, Organiation global chainee : anything else \n");
+    metaDonnees.adressePremierBloc = -1;
+
+    printf("Organisation globale contiguë : 0, Organisation globale chaînée : autre valeur \n");
     char c;
     scanf(" %c", &c);
     if (c == '0')
@@ -33,7 +34,7 @@ void creerFichier(FILE *ms)
         metaDonnees.modeOrganisationGlobal = ORGANISATION_GLOBAL_CHAINEE;
     }
 
-    printf("Organiation global triee : 0, Organiation global non triee : anything else \n");
+    printf("Organiation global triee : 0, Organiation global non triee : autre valeur \n");
     scanf(" %c", &c);
     if (c == '0')
     {
@@ -44,13 +45,42 @@ void creerFichier(FILE *ms)
         metaDonnees.modeOrganisationGlobal = ORGANISATION_INTERNE_NON_TRIEE;
     }
 
-    updateTAllocationAfterCreation(ms, &metaDonnees);
-    addMetaDonnees(ms, &metaDonnees);
-    writeFichierToMs(ms, metaDonnees);
+    mettreAJourTallocationAprèsCréation(ms, &metaDonnees);
+    if (metaDonnees.adressePremierBloc == -1)
+    {
+        compactage(ms);
+        mettreAJourTallocationAprèsCréation(ms, &metaDonnees);
+
+        if (metaDonnees.adressePremierBloc == -1)
+        {
+            printf("Pas de bloc libre\n");
+        }
+        else
+        {
+            ajouterMetaDonnees(ms, &metaDonnees);
+            writeFichierToMs(ms, metaDonnees);
+            if (metaDonnees.modeOrganisationInterne == ORGANISATION_INTERNE_TRIEE)
+            {
+                trierBlocsEtudiant(ms, metaDonnees.adressePremierBloc, metaDonnees.tailleFichierBlocs);
+            }
+            printf("Le fichier a ete cree\n");
+        }
+    }
+    else
+    {
+        ajouterMetaDonnees(ms, &metaDonnees);
+        writeFichierToMs(ms, metaDonnees);
+        if (metaDonnees.modeOrganisationInterne == ORGANISATION_INTERNE_TRIEE)
+        {
+            trierBlocsEtudiant(ms, metaDonnees.adressePremierBloc, metaDonnees.tailleFichierBlocs);
+        }
+        printf("Le fichier a ete cree\n");
+    }
+
     printf("\n\n");
 }
 
-void addMetaDonnees(FILE *ms, MetaDonnees *metaDonnees)
+void ajouterMetaDonnees(FILE *ms, MetaDonnees *metaDonnees)
 {
     seekToMetaDonneesBloc(ms);
 
@@ -68,7 +98,7 @@ void addMetaDonnees(FILE *ms, MetaDonnees *metaDonnees)
     fwrite(metaDonnees, sizeof(MetaDonnees), 1, ms);
 }
 
-void deleteMetaDonnees(FILE *ms, int deletedElementIndex)
+void supprimerMetaDonnees(FILE *ms, int deletedElementIndex)
 {
     seekToMetaDonneesBloc(ms);
 
@@ -113,8 +143,16 @@ void writeFichierToMs(FILE *ms, MetaDonnees metaDonnees)
     }
 }
 
-void renommerFichier(FILE *ms, const char *nomFichier, const char *nouveauNom)
+void renommerFichier(FILE *ms)
 {
+    char nomFichier[30];
+    printf("Entrer le nom du fichier que vous voulez renommer: ");
+    scanf("%s", nomFichier);
+
+    char nouveauNom[30];
+    printf("Entrer le nom du nouveau fichier: ");
+    scanf("%s", nouveauNom);
+
     MetaDonneesBloc metaDonneesBloc;
     seekToMetaDonneesBloc(ms);
 
@@ -192,8 +230,8 @@ void supprimerFichier(FILE *ms)
         MetaDonnees metaDonnees = metaDonneesBloc.metaDonnees[i];
         if (strcmp(nomFichier, metaDonnees.nomFichier) == 0)
         {
-            updateTAllocationAfterDeletion(ms, metaDonnees);
-            deleteMetaDonnees(ms, i + 1);
+            mettreAJourTallocationAprèsSuppression(ms, metaDonnees);
+            supprimerMetaDonnees(ms, i + 1);
             printf("Le fichier %s a ete supprimer\n", nomFichier);
             printf("\n");
             return;
@@ -241,43 +279,45 @@ void suppressionLogiqueEtudiant(FILE *ms)
     }
 
     printf("Aucun etudiant avec ce id\n\n");
-
-    free(tAllocation);
 }
 
-void trierBlocEtudiant(FILE *ms, int nombreBloc)
+void trierBlocsEtudiant(FILE *ms, int adressePremierBloc, int tailleFichierBloc)
 {
     MsMetaDonnees msMetaDonnees;
     readMsMetaDonnees(ms, &msMetaDonnees);
 
     seekToMainBlocs(ms);
-    fseek(ms, msMetaDonnees.tailleBloc * (nombreBloc - 1), SEEK_CUR);
+    fseek(ms, msMetaDonnees.tailleBloc * (adressePremierBloc - 1), SEEK_CUR);
 
-    EtudiantBloc etudiantBloc;
-    readEtudiantBloc(ms, &etudiantBloc, msMetaDonnees.facteurBlocage);
-
-    for (int i = 0; i < etudiantBloc.nombreEtudiant - 1; i++)
+    for (size_t i = 0; i < tailleFichierBloc; i++)
     {
-        int minIndex = i;
-        for (int j = i + 1; j < etudiantBloc.nombreEtudiant; j++)
+        EtudiantBloc etudiantBloc;
+        readEtudiantBloc(ms, &etudiantBloc, msMetaDonnees.facteurBlocage);
+
+        for (int i = 0; i < etudiantBloc.nombreEtudiant - 1; i++)
         {
-            if (etudiantBloc.etudiants[j].id < etudiantBloc.etudiants[minIndex].id)
+            int minIndex = i;
+            for (int j = i + 1; j < etudiantBloc.nombreEtudiant; j++)
             {
-                minIndex = j;
+                if (etudiantBloc.etudiants[j].id < etudiantBloc.etudiants[minIndex].id)
+                {
+                    minIndex = j;
+                }
+            }
+
+            if (minIndex != i)
+            {
+                Etudiant temp = etudiantBloc.etudiants[i];
+                etudiantBloc.etudiants[i] = etudiantBloc.etudiants[minIndex];
+                etudiantBloc.etudiants[minIndex] = temp;
             }
         }
 
-        if (minIndex != i)
+        fseek(ms, sizeof(int) - msMetaDonnees.tailleBloc, SEEK_CUR);
+        for (size_t i = 0; i < etudiantBloc.nombreEtudiant; i++)
         {
-            Etudiant temp = etudiantBloc.etudiants[i];
-            etudiantBloc.etudiants[i] = etudiantBloc.etudiants[minIndex];
-            etudiantBloc.etudiants[minIndex] = temp;
+            fwrite(etudiantBloc.etudiants + i, sizeof(Etudiant), 1, ms);
         }
-    }
-
-    fseek(ms, sizeof(int) - msMetaDonnees.tailleBloc, SEEK_CUR);
-    for (size_t i = 0; i < etudiantBloc.nombreEtudiant; i++)
-    {
-        fwrite(etudiantBloc.etudiants + i, sizeof(Etudiant), 1, ms);
+        fseek(ms, msMetaDonnees.tailleBloc * (msMetaDonnees.facteurBlocage - etudiantBloc.nombreEtudiant), SEEK_CUR);
     }
 }

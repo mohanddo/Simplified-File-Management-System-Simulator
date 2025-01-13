@@ -13,10 +13,12 @@ void initMetaDonneesBlocs(FILE *ms, int tailleBloc);
 
 void initMainBlocs(FILE *ms);
 
-void updateTAllocationAfterCreation(FILE *ms,
-                                    MetaDonnees *metaDonnees);
+void mettreAJourTallocationAprèsCréation(FILE *ms,
+                                         MetaDonnees *metaDonnees);
 
-void updateTAllocationAfterDeletion(FILE *ms, MetaDonnees metaDonnees);
+void mettreAJourTallocationAprèsSuppression(FILE *ms, MetaDonnees metaDonnees);
+
+void compactage(FILE *ms);
 
 void viderMS(FILE **ms);
 

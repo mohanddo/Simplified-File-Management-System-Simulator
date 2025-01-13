@@ -1,6 +1,12 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+#define ORGANISATION_GLOBAL_CONTIGUE 0
+#define ORGANISATION_GLOBAL_CHAINEE 1
+
+#define ORGANISATION_INTERNE_TRIEE 0
+#define ORGANISATION_INTERNE_NON_TRIEE 1
+
 typedef bool *tAllocation;
 
 typedef struct

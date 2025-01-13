@@ -6,43 +6,6 @@ void readMsMetaDonnees(FILE *ms, MsMetaDonnees *msMetaDonnees)
     fread(msMetaDonnees, sizeof(MsMetaDonnees), 1, ms);
 }
 
-void readTAllocation(FILE *ms, tAllocation *tAllocation)
-{
-    MsMetaDonnees msMetaDonnees;
-    readMsMetaDonnees(ms, &msMetaDonnees);
-
-    Buffer buffer;
-    buffer.tAllocation = (bool *)malloc(sizeof(bool) * (msMetaDonnees.nombreBloc - 2));
-
-    for (size_t i = 0; i < msMetaDonnees.nombreBloc - 2; i++)
-    {
-        fread(buffer.tAllocation + i, sizeof(bool), 1, ms);
-    }
-
-    *tAllocation = buffer.tAllocation;
-}
-
-void seekToMainBlocs(FILE *ms)
-{
-    MsMetaDonnees msMetaDonnees;
-    readMsMetaDonnees(ms, &msMetaDonnees);
-
-    // Skip allocation table
-    fseek(ms, sizeof(bool) * (msMetaDonnees.nombreBloc - 2), SEEK_CUR);
-
-    // Skip meta donnees blocs
-    fseek(ms, msMetaDonnees.tailleBloc, SEEK_CUR);
-}
-
-void seekToMetaDonneesBloc(FILE *ms)
-{
-    MsMetaDonnees msMetaDonnees;
-    readMsMetaDonnees(ms, &msMetaDonnees);
-
-    // Skip allocation table
-    fseek(ms, sizeof(bool) * (msMetaDonnees.nombreBloc - 2), SEEK_CUR);
-}
-
 void printAllocationTable(FILE *ms)
 {
     MsMetaDonnees msMetaDonnees;
@@ -66,15 +29,86 @@ void printAllocationTable(FILE *ms)
     free(tAllocation);
 }
 
+void readTAllocation(FILE *ms, tAllocation *tAllocation)
+{
+    MsMetaDonnees msMetaDonnees;
+    readMsMetaDonnees(ms, &msMetaDonnees);
+
+    Buffer buffer;
+    buffer.tAllocation = (bool *)malloc(sizeof(bool) * (msMetaDonnees.nombreBloc - 2));
+
+    for (size_t i = 0; i < msMetaDonnees.nombreBloc - 2; i++)
+    {
+        fread(buffer.tAllocation + i, sizeof(bool), 1, ms);
+    }
+
+    *tAllocation = buffer.tAllocation;
+}
+
+void printMetaDonneesBloc(FILE *ms)
+{
+    seekToMetaDonneesBloc(ms);
+
+    MetaDonneesBloc metaDonneesBloc;
+
+    readMetaDonneesBloc(ms, &metaDonneesBloc);
+    printf("Meta Donnees Bloc\n\n");
+
+    printf("Nombre fichier: %d\n\n", metaDonneesBloc.nombreFichier);
+
+    for (size_t i = 0; i < metaDonneesBloc.nombreFichier; i++)
+    {
+        printMetaDonnees(metaDonneesBloc.metaDonnees[i]);
+    }
+    printf("\n\n");
+}
+
 void printMetaDonnees(MetaDonnees meta)
 {
     printf("Nom du fichier: %s\n", meta.nomFichier);
     printf("Taille du fichier (blocs): %d\n", meta.tailleFichierBlocs);
     printf("Taille du fichier (enregistrements): %d\n", meta.tailleFichierEngistrements);
     printf("Adresse du premier bloc: %d\n", meta.adressePremierBloc);
-    printf("Mode d'organisation global: %d\n", meta.modeOrganisationGlobal);
-    printf("Mode d'organisation interne: %d\n", meta.modeOrganisationInterne);
-    printf("\n");
+    if (meta.modeOrganisationGlobal == ORGANISATION_GLOBAL_CHAINEE)
+    {
+        printf("Mode d'organisation global: ORGANISATION GLOBAL CHAINEE\n");
+    }
+    else
+    {
+        printf("Mode d'organisation global: ORGANISATION GLOBAL CONTIGUE\n");
+    }
+
+    if (meta.modeOrganisationGlobal == ORGANISATION_INTERNE_TRIEE)
+    {
+        printf("Mode d'organisation interne: ORGANISATION INTERNE TRIEE \n");
+    }
+    else
+    {
+        printf("Mode d'organisation interne: ORGANISATION INTERNE NON TRIEE\n");
+    }
+
+    printf("\n\n");
+}
+
+void seekToMetaDonneesBloc(FILE *ms)
+{
+    MsMetaDonnees msMetaDonnees;
+    readMsMetaDonnees(ms, &msMetaDonnees);
+
+    // Skip allocation table
+    fseek(ms, sizeof(bool) * (msMetaDonnees.nombreBloc - 2), SEEK_CUR);
+}
+
+void seekToMainBlocs(FILE *ms)
+{
+    MsMetaDonnees msMetaDonnees;
+    readMsMetaDonnees(ms, &msMetaDonnees);
+
+    // Skip allocation table
+    fseek(ms, sizeof(bool) * (msMetaDonnees.nombreBloc - 2), SEEK_CUR);
+
+    // Skip meta donnees blocs
+    fseek(ms, msMetaDonnees.tailleBloc, SEEK_CUR);
 }
 
 void readMetaDonneesBloc(FILE *ms, MetaDonneesBloc *metaDonneesBloc)
@@ -89,24 +123,6 @@ void readMetaDonneesBloc(FILE *ms, MetaDonneesBloc *metaDonneesBloc)
         fread(buffer.metaDonneesBloc.metaDonnees + i, sizeof(MetaDonnees), 1, ms);
     }
     metaDonneesBloc->metaDonnees = buffer.metaDonneesBloc.metaDonnees;
-}
-
-void printMetaDonneesBloc(FILE *ms)
-{
-    seekToMetaDonneesBloc(ms);
-
-    MetaDonneesBloc metaDonneesBloc;
-
-    readMetaDonneesBloc(ms, &metaDonneesBloc);
-    printf("Fichier Meta Donnees Bloc\n");
-
-    printf("Nombre fichier: %d\n", metaDonneesBloc.nombreFichier);
-
-    for (size_t i = 0; i < metaDonneesBloc.nombreFichier; i++)
-    {
-        printMetaDonnees(metaDonneesBloc.metaDonnees[i]);
-    }
-    printf("\n\n");
 }
 
 void printEtudiant(Etudiant e)
@@ -156,6 +172,66 @@ void printMainBlocs(FILE *ms)
             printf("Nombre Etudiant: 0\n\n");
             continue;
         }
+
+        printf("Nombre Etudiant: %d\n\n", etudiantBloc.nombreEtudiant);
+
+        for (size_t j = 0; j < etudiantBloc.nombreEtudiant; j++)
+        {
+            if (etudiantBloc.etudiants[j].id != -1)
+            {
+                printEtudiant(etudiantBloc.etudiants[j]);
+            }
+        }
+        printf("\n\n");
+    }
+
+    free(tAllocation);
+}
+
+void printFichier(FILE *ms)
+{
+
+    char nomFichier[30];
+    printf("Entrer le nom du fichier: ");
+    scanf("%s", nomFichier);
+
+    seekToMetaDonneesBloc(ms);
+    MetaDonneesBloc metaDonneesBloc;
+    readMetaDonneesBloc(ms, &metaDonneesBloc);
+
+    int adressePremierBloc = -1;
+    int tailleFichierBlocs = -1;
+    for (size_t i = 0; i < metaDonneesBloc.nombreFichier; i++)
+    {
+        if (strcmp(metaDonneesBloc.metaDonnees[i].nomFichier, nomFichier) == 0)
+        {
+            printMetaDonnees(metaDonneesBloc.metaDonnees[i]);
+            adressePremierBloc = metaDonneesBloc.metaDonnees[i].adressePremierBloc;
+            tailleFichierBlocs = metaDonneesBloc.metaDonnees[i].tailleFichierBlocs;
+        }
+    }
+
+    if (adressePremierBloc == -1)
+    {
+        printf("Le fichier %s n'existe pas\n", nomFichier);
+        printf("\n");
+    }
+
+    MsMetaDonnees msMetaDonnees;
+    readMsMetaDonnees(ms, &msMetaDonnees);
+
+    tAllocation tAllocation = (bool *)malloc(sizeof(bool) * (msMetaDonnees.nombreBloc - 2));
+    readTAllocation(ms, &tAllocation);
+
+    seekToMainBlocs(ms);
+    fseek(ms, adressePremierBloc * msMetaDonnees.tailleBloc, SEEK_CUR);
+
+    for (int i = adressePremierBloc; i < tailleFichierBlocs; i++)
+    {
+        EtudiantBloc etudiantBloc;
+        readEtudiantBloc(ms, &etudiantBloc, msMetaDonnees.facteurBlocage);
+
+        printf("Bloc %d\n", i + 1);
 
         printf("Nombre Etudiant: %d\n\n", etudiantBloc.nombreEtudiant);
 

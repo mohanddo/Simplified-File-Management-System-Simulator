@@ -5,31 +5,18 @@
 #include "MS.h"
 #include "utils.h"
 #include "fichier.h"
+#include "menu.h"
 
 int main()
 {
     srand(time(NULL));
-  /*  FILE *ms = fopen("ms.bin", "wb+");
+    FILE *ms = fopen("ms.bin", "wb+");
 
     initDisk(ms);
-    creerFichier(ms);
-    printAllocationTable(ms);
-    printMetaDonneesBloc(ms);
-    printMainBlocs(ms);
 
-    trierBlocEtudiant(ms, 1);
-
-    // rechercherEtudiantParId(ms);
-
-    // suppressionLogiqueEtudiant(ms);
-
-    // supprimerFichier(ms);
-
-    // printAllocationTable(ms);
-    // printMetaDonneesBloc(ms);
-    printMainBlocs(ms);
+    displayMenu(ms);
 
     fclose(ms);
-*/
+
     return 0;
 }

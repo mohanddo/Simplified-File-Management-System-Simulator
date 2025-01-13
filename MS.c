@@ -7,11 +7,11 @@
 void initDisk(FILE *ms)
 {
     int nombreBloc;
-    printf("Entrer le nombre de blocs: ");
+    printf("Entrez le nombre de blocs (recommandé 20): ");
     scanf("%d", &nombreBloc);
 
     int tailleBloc;
-    printf("Entrer la taille de bloc on bytes: ");
+    printf("Entrez la taille du bloc en octets (recommandé 220): ");
     scanf("%d", &tailleBloc);
     printf("\n");
 
@@ -35,6 +35,8 @@ void initDisk(FILE *ms)
 
 void initTAllocation(FILE *ms, int nombreBloc)
 {
+    // We suppose that the first block is for allocation table
+
     tAllocation tAllocation = (bool *)malloc(sizeof(bool) * (nombreBloc - 2));
 
     for (size_t i = 0; i < nombreBloc - 2; i++)
@@ -48,7 +50,7 @@ void initTAllocation(FILE *ms, int nombreBloc)
 
 void initMetaDonneesBlocs(FILE *ms, int tailleBloc)
 {
-    // We suppose that the second is for meta donnees
+    // We suppose that the second bloc is for meta donnees
     // Write the number of MetaDonnees structures witch is zero in the beginning as there is no files
     int zero = 0;
     fwrite(&zero, sizeof(int), 1, ms);
@@ -69,7 +71,7 @@ void initMainBlocs(FILE *ms)
     }
 }
 
-void updateTAllocationAfterCreation(FILE *ms, MetaDonnees *metaDonnees)
+void mettreAJourTallocationAprèsCréation(FILE *ms, MetaDonnees *metaDonnees)
 {
     MsMetaDonnees msMetaDonnees;
     readMsMetaDonnees(ms, &msMetaDonnees);
@@ -87,11 +89,15 @@ void updateTAllocationAfterCreation(FILE *ms, MetaDonnees *metaDonnees)
     {
         if (!tAllocation[i])
         {
-            metaDonnees->adressePremierBloc = i;
-            for (int j = 0; j < metaDonnees->tailleFichierBlocs; j++)
+            if (i + metaDonnees->tailleFichierBlocs <= nombreBloc - 2)
             {
-                tAllocation[metaDonnees->adressePremierBloc + j] = true;
+                metaDonnees->adressePremierBloc = i;
+                for (int j = 0; j < metaDonnees->tailleFichierBlocs; j++)
+                {
+                    tAllocation[metaDonnees->adressePremierBloc + j] = true;
+                }
             }
+
             break;
         }
     }
@@ -104,7 +110,7 @@ void updateTAllocationAfterCreation(FILE *ms, MetaDonnees *metaDonnees)
     free(tAllocation);
 }
 
-void updateTAllocationAfterDeletion(FILE *ms, MetaDonnees metaDonnees)
+void mettreAJourTallocationAprèsSuppression(FILE *ms, MetaDonnees metaDonnees)
 {
     MsMetaDonnees msMetaDonnees;
     readMsMetaDonnees(ms, &msMetaDonnees);
@@ -130,6 +136,52 @@ void updateTAllocationAfterDeletion(FILE *ms, MetaDonnees metaDonnees)
     }
 
     free(tAllocation);
+}
+
+void compactage(FILE *ms)
+{
+    printf("Compactage...\n");
+
+    MsMetaDonnees msMetaDonnees;
+    readMsMetaDonnees(ms, &msMetaDonnees);
+
+    tAllocation tAllocation = (bool *)malloc(sizeof(bool) * (msMetaDonnees.nombreBloc - 2));
+    readTAllocation(ms, &tAllocation);
+
+    seekToMainBlocs(ms);
+
+    for (size_t i = 0; i < msMetaDonnees.nombreBloc - 2; i++)
+    {
+        EtudiantBloc etudiantBloc;
+        readEtudiantBloc(ms, &etudiantBloc, msMetaDonnees.facteurBlocage);
+
+        if (!tAllocation[i])
+        {
+            for (size_t j = i + 1; j < msMetaDonnees.nombreBloc - 2; j++)
+            {
+                readEtudiantBloc(ms, &etudiantBloc, msMetaDonnees.facteurBlocage);
+                if (tAllocation[j])
+                {
+                    tAllocation[j] = false;
+                    tAllocation[i] = true;
+                    fseek(ms, -(j - i + 1) * msMetaDonnees.tailleBloc, SEEK_CUR);
+                    fwrite(&(etudiantBloc.nombreEtudiant), sizeof(int), 1, ms);
+                    for (size_t i = 0; i < etudiantBloc.nombreEtudiant; i++)
+                    {
+                        fwrite(etudiantBloc.etudiants + i, sizeof(Etudiant), 1, ms);
+                    }
+                    fseek(ms, (msMetaDonnees.facteurBlocage - etudiantBloc.nombreEtudiant) * sizeof(Etudiant), SEEK_CUR);
+                    break;
+                }
+            }
+        }
+    }
+
+    readMsMetaDonnees(ms, &msMetaDonnees);
+    for (size_t i = 0; i < msMetaDonnees.nombreBloc - 2; i++)
+    {
+        fwrite(tAllocation + i, sizeof(bool), 1, ms);
+    }
 }
 
 void viderMS(FILE **ms)
